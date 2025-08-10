@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/lib/auth';
-import db from '@/lib/db';
+import getDb from '@/lib/db';
 import { randomUUID } from 'crypto';
-import type { Section } from '@/lib/types';
+import type { Section, Project } from '@/lib/types';
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -11,11 +11,18 @@ export async function GET(req: Request) {
   if (!user) return NextResponse.json([], { status: 401 });
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get('projectId');
-  db.read();
-  const sections = db.data.sections.filter(s => {
-    const project = db.data.projects.find(p => p.id === s.projectId);
-    return project && project.ownerId === user.id && (!projectId || s.projectId === projectId);
-  });
+  const db = await getDb();
+  const projectsCol = db.collection<Project>('projects');
+  const sectionsCol = db.collection<Section>('sections');
+  if (projectId) {
+    const project = await projectsCol.findOne({ id: projectId, ownerId: user.id });
+    if (!project) return NextResponse.json([], { status: 404 });
+    const sections = await sectionsCol.find({ projectId }).toArray();
+    return NextResponse.json(sections);
+  }
+  const userProjects = await projectsCol.find({ ownerId: user.id }).toArray();
+  const ids = userProjects.map(p => p.id);
+  const sections = await sectionsCol.find({ projectId: { $in: ids } }).toArray();
   return NextResponse.json(sections);
 }
 
@@ -24,8 +31,10 @@ export async function POST(req: Request) {
   const user = session?.user as any;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const data: Partial<Section> = await req.json();
-  db.read();
-  const project = db.data.projects.find(p => p.id === data.projectId && p.ownerId === user.id);
+  const db = await getDb();
+  const projectsCol = db.collection<Project>('projects');
+  const sectionsCol = db.collection<Section>('sections');
+  const project = await projectsCol.findOne({ id: data.projectId, ownerId: user.id });
   if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   const newSection: Section = {
     id: randomUUID(),
@@ -35,8 +44,7 @@ export async function POST(req: Request) {
     notes: data.notes ?? '',
     status: data.status ?? 'draft'
   };
-  db.data.sections.push(newSection);
-  db.write();
+  await sectionsCol.insertOne(newSection);
   return NextResponse.json(newSection, { status: 201 });
 }
 
@@ -45,13 +53,15 @@ export async function PUT(req: Request) {
   const user = session?.user as any;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const data: Partial<Section> = await req.json();
-  db.read();
-  const index = db.data.sections.findIndex(s => s.id === data.id);
-  if (index === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const project = db.data.projects.find(p => p.id === db.data.sections[index].projectId);
+  const db = await getDb();
+  const sectionsCol = db.collection<Section>('sections');
+  const projectsCol = db.collection<Project>('projects');
+  const existing = await sectionsCol.findOne({ id: data.id });
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const project = await projectsCol.findOne({ id: existing.projectId });
   if (!project || project.ownerId !== user.id)
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  db.data.sections[index] = { ...db.data.sections[index], ...data } as Section;
-  db.write();
-  return NextResponse.json(db.data.sections[index]);
+  await sectionsCol.updateOne({ id: data.id }, { $set: data });
+  const updated = await sectionsCol.findOne({ id: data.id });
+  return NextResponse.json(updated);
 }

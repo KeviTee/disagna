@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { Document, Packer, Paragraph } from 'docx';
-import db from '@/lib/db';
+import getDb from '@/lib/db';
+import type { Project, Section } from '@/lib/types';
 
 export async function POST(req: Request) {
   const { projectId } = await req.json();
-  db.read();
-  const project = db.data.projects.find(p => p.id === projectId);
-  const sections = db.data.sections.filter(s => s.projectId === projectId);
+  const db = await getDb();
+  const project = await db
+    .collection<Project>('projects')
+    .findOne({ id: projectId });
+  const sections = await db
+    .collection<Section>('sections')
+    .find({ projectId })
+    .toArray();
   const doc = new Document({
     sections: [
       {

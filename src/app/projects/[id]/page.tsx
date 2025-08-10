@@ -1,0 +1,59 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import type { Project, Section } from '@/lib/types';
+
+/** Shows project overview with its sections */
+const ProjectPage = () => {
+  const params = useParams<{ id: string }>();
+  const [project, setProject] = useState<Project | null>(null);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [key, setKey] = useState('');
+
+  useEffect(() => {
+    if (!params.id) return;
+    fetch(`/api/projects/${params.id}`).then(res => res.json()).then(setProject);
+    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+  }, [params.id]);
+
+  const addSection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetch('/api/sections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: params.id, key })
+    });
+    setKey('');
+    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+  };
+
+  if (!project) {
+    return <main className='p-4'>Loading...</main>;
+  }
+
+  return (
+    <main className='p-4'>
+      <h1 className='mb-4 text-2xl font-bold'>{project.title}</h1>
+      <form onSubmit={addSection} className='mb-4 flex gap-2'>
+        <input
+          value={key}
+          onChange={e => setKey(e.target.value)}
+          placeholder='Section key'
+          className='rounded border p-2'
+        />
+        <button type='submit' className='rounded bg-green-600 px-4 py-2 text-white'>Add</button>
+      </form>
+      <ul className='space-y-2'>
+        {sections.map(s => (
+          <li key={s.id} className='rounded border p-2'>
+            <Link href={`/projects/${project.id}/sections/${s.id}`}>{s.key}</Link>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+};
+
+export default ProjectPage;

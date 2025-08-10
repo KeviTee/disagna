@@ -1,12 +1,14 @@
-import HomePage from '@/app/(delete-this-and-modify-page.tsx)/HomePage';
+import Link from 'next/link';
 
-/**
- * The main page component that renders the HomePage component.
- *
- * @returns {JSX.Element} The rendered HomePage component.
- */
+/** Landing page with signup call to action */
 const Page = () => {
-    return <HomePage />;
+  return (
+    <main className='flex min-h-screen flex-col items-center justify-center gap-6 p-4'>
+      <h1 className='text-4xl font-bold'>Dissertation SaaS</h1>
+      <p className='text-center max-w-xl'>A guided writing platform with AI support for Zimbabwean university students.</p>
+      <Link href='/sign-in' className='rounded bg-blue-600 px-4 py-2 text-white'>Get Started</Link>
+    </main>
+  );
 };
 
 export default Page;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { Section } from '@/lib/types';
+import WysiwygEditor from '@/components/wysiwyg-editor';
 
 /** Guided section editor with AI suggestions */
 const SectionPage = () => {
@@ -45,11 +46,7 @@ const SectionPage = () => {
   return (
     <main className='space-y-4 p-4'>
       <h1 className='text-xl font-bold'>{section.key}</h1>
-      <textarea
-        className='w-full rounded border p-2'
-        value={content}
-        onChange={e => setContent(e.target.value)}
-      />
+      <WysiwygEditor value={content} onChange={setContent} />
       <div className='flex gap-2'>
         <button onClick={save} className='rounded bg-blue-600 px-4 py-2 text-white'>Save</button>
         <button onClick={getSuggestion} className='rounded bg-green-600 px-4 py-2 text-white'>AI Suggest</button>

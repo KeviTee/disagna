@@ -1,4 +1,5 @@
 import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { LowSync } from 'lowdb';
 import { JSONFileSync } from 'lowdb/node';
 import type { User, Project, Section } from './types';
@@ -9,7 +10,9 @@ interface Data {
   sections: Section[];
 }
 
-const file = join(process.cwd(), 'data/db.json');
+const dataDir = join(process.cwd(), 'data');
+if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
+const file = join(dataDir, 'db.json');
 const adapter = new JSONFileSync<Data>(file);
 const defaultData: Data = { users: [], projects: [], sections: [] };
 const db = new LowSync(adapter, defaultData);

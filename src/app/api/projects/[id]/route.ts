@@ -4,9 +4,8 @@ import authOptions from '@/lib/auth';
 import db from '@/lib/db';
 import type { Project } from '@/lib/types';
 
-interface Params { params: { id: string } }
-
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(_req: Request, context: any) {
+  const { params } = context;
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,7 +15,8 @@ export async function GET(_req: Request, { params }: Params) {
   return NextResponse.json(project);
 }
 
-export async function PUT(req: Request, { params }: Params) {
+export async function PUT(req: Request, context: any) {
+  const { params } = context;
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

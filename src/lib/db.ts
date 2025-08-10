@@ -1,5 +1,6 @@
 import { join } from 'path';
-import { LowSync, JSONFileSync } from 'lowdb';
+import { LowSync } from 'lowdb';
+import { JSONFileSync } from 'lowdb/node';
 import type { User, Project, Section } from './types';
 
 interface Data {

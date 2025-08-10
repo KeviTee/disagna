@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'crypto';
 import db from '@/lib/db';
 import type { User } from '@/lib/types';
 
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
   }
   const user: User = {
-    id: uuid(),
+    id: randomUUID(),
     name,
     email,
     password: await bcrypt.hash(password, 10),

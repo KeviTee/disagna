@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/lib/auth';
 import db from '@/lib/db';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'crypto';
 import type { Project } from '@/lib/types';
 
 export async function GET() {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   const data: Partial<Project> = await req.json();
   db.read();
   const newProject: Project = {
-    id: uuid(),
+    id: randomUUID(),
     ownerId: user.id,
     title: data.title ?? '',
     institution: data.institution ?? '',

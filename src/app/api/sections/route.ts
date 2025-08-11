@@ -65,3 +65,20 @@ export async function PUT(req: Request) {
   const updated = await sectionsCol.findOne({ id: data.id });
   return NextResponse.json(updated);
 }
+
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await req.json();
+  const db = await getDb();
+  const sectionsCol = db.collection<Section>('sections');
+  const projectsCol = db.collection<Project>('projects');
+  const existing = await sectionsCol.findOne({ id });
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const project = await projectsCol.findOne({ id: existing.projectId });
+  if (!project || project.ownerId !== user.id)
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  await sectionsCol.deleteOne({ id });
+  return NextResponse.json({ ok: true });
+}

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/lib/auth';
 import getDb from '@/lib/db';
-import type { Project } from '@/lib/types';
+import type { Project, Section } from '@/lib/types';
 
 export async function GET(_req: Request, context: any) {
   const { params } = context;
@@ -30,4 +30,18 @@ export async function PUT(req: Request, context: any) {
   await db.collection<Project>('projects').updateOne(filter, { $set: data });
   const updated = { ...existing, ...data } as Project;
   return NextResponse.json(updated);
+}
+
+export async function DELETE(_req: Request, context: any) {
+  const { params } = context;
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const db = await getDb();
+  const filter = { id: params.id, ownerId: user.id };
+  const existing = await db.collection<Project>('projects').findOne(filter);
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  await db.collection<Project>('projects').deleteOne(filter);
+  await db.collection<Section>('sections').deleteMany({ projectId: params.id });
+  return NextResponse.json({ ok: true });
 }

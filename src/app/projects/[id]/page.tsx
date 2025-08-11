@@ -12,10 +12,13 @@ const ProjectPage = () => {
   const [sections, setSections] = useState<Section[]>([]);
   const [key, setKey] = useState('');
 
+  const loadSections = () =>
+    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+
   useEffect(() => {
     if (!params.id) return;
     fetch(`/api/projects/${params.id}`).then(res => res.json()).then(setProject);
-    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+    loadSections();
   }, [params.id]);
 
   const addSection = async (e: React.FormEvent) => {
@@ -26,7 +29,16 @@ const ProjectPage = () => {
       body: JSON.stringify({ projectId: params.id, key })
     });
     setKey('');
-    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+    loadSections();
+  };
+
+  const removeSection = async (id: string) => {
+    await fetch('/api/sections', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    loadSections();
   };
 
   if (!project) {
@@ -47,8 +59,14 @@ const ProjectPage = () => {
       </form>
       <ul className='space-y-2'>
         {sections.map(s => (
-          <li key={s.id} className='rounded border p-2'>
+          <li key={s.id} className='flex items-center justify-between rounded border p-2'>
             <Link href={`/projects/${project.id}/sections/${s.id}`}>{s.key}</Link>
+            <button
+              onClick={() => removeSection(s.id)}
+              className='text-sm text-red-600'
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>

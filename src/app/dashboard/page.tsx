@@ -31,6 +31,11 @@ const Dashboard = () => {
     load();
   };
 
+  const removeProject = async (id: string) => {
+    await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    load();
+  };
+
   if (status === 'loading') return <p>Loading...</p>;
   if (!session) return <p>Please sign in</p>;
 
@@ -48,8 +53,14 @@ const Dashboard = () => {
       </form>
       <ul className='space-y-2'>
         {projects.map(p => (
-          <li key={p.id} className='rounded border p-2'>
+          <li key={p.id} className='flex items-center justify-between rounded border p-2'>
             <Link href={`/projects/${p.id}`}>{p.title || 'Untitled Project'}</Link>
+            <button
+              onClick={() => removeProject(p.id)}
+              className='text-sm text-red-600'
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>

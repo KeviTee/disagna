@@ -26,11 +26,11 @@ export async function POST(req: Request) {
   const newProject: Project = {
     id: randomUUID(),
     ownerId: user.id,
-    title: data.title ?? '',
-    institution: data.institution ?? '',
-    programme: data.programme ?? '',
-    supervisor: data.supervisor ?? '',
-    deadlines: data.deadlines ?? [],
+    topic: data.topic ?? '',
+    institution: data.institution,
+    programme: data.programme,
+    supervisor: data.supervisor,
+    deadlines: data.deadlines,
     status: data.status ?? 'draft'
   };
   await db.collection<Project>('projects').insertOne(newProject);

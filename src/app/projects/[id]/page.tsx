@@ -5,10 +5,10 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import type { Project, Section } from '@/lib/types';
 
-/** Shows project overview with its sections */
-const ProjectPage = () => {
+/** Shows topic overview with its sections */
+const TopicPage = () => {
   const params = useParams<{ id: string }>();
-  const [project, setProject] = useState<Project | null>(null);
+  const [topic, setTopic] = useState<Project | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [key, setKey] = useState('');
 
@@ -17,7 +17,7 @@ const ProjectPage = () => {
 
   useEffect(() => {
     if (!params.id) return;
-    fetch(`/api/projects/${params.id}`).then(res => res.json()).then(setProject);
+    fetch(`/api/projects/${params.id}`).then(res => res.json()).then(setTopic);
     loadSections();
   }, [params.id]);
 
@@ -41,13 +41,13 @@ const ProjectPage = () => {
     loadSections();
   };
 
-  if (!project) {
+  if (!topic) {
     return <main className='p-4'>Loading...</main>;
   }
 
   return (
     <main className='p-4'>
-      <h1 className='mb-4 text-2xl font-bold'>{project.title}</h1>
+      <h1 className='mb-4 text-2xl font-bold'>{topic.topic}</h1>
       <form onSubmit={addSection} className='mb-4 flex gap-2'>
         <input
           value={key}
@@ -60,7 +60,7 @@ const ProjectPage = () => {
       <ul className='space-y-2'>
         {sections.map(s => (
           <li key={s.id} className='flex items-center justify-between rounded border p-2'>
-            <Link href={`/projects/${project.id}/sections/${s.id}`}>{s.key}</Link>
+            <Link href={`/projects/${topic.id}/sections/${s.id}`}>{s.key}</Link>
             <button
               onClick={() => removeSection(s.id)}
               className='text-sm text-red-600'
@@ -74,4 +74,4 @@ const ProjectPage = () => {
   );
 };
 
-export default ProjectPage;
+export default TopicPage;

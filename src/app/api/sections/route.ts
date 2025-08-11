@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   const projectsCol = db.collection<Project>('projects');
   const sectionsCol = db.collection<Section>('sections');
   const project = await projectsCol.findOne({ id: data.projectId, ownerId: user.id });
-  if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+  if (!project) return NextResponse.json({ error: 'Topic not found' }, { status: 404 });
   const newSection: Section = {
     id: randomUUID(),
     projectId: data.projectId!,

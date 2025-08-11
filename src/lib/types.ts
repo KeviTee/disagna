@@ -12,12 +12,12 @@ export interface User {
 export interface Project {
   id: string;
   ownerId: string;
-  title: string;
-  institution: string;
-  programme: string;
-  supervisor: string;
-  deadlines: string[];
-  status: string;
+  topic: string;
+  institution?: string;
+  programme?: string;
+  supervisor?: string;
+  deadlines?: string[];
+  status?: string;
 }
 
 export interface Section {

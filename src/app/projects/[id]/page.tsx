@@ -5,17 +5,20 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import type { Project, Section } from '@/lib/types';
 
-/** Shows project overview with its sections */
-const ProjectPage = () => {
+/** Shows topic overview with its sections */
+const TopicPage = () => {
   const params = useParams<{ id: string }>();
-  const [project, setProject] = useState<Project | null>(null);
+  const [topic, setTopic] = useState<Project | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [key, setKey] = useState('');
 
+  const loadSections = () =>
+    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+
   useEffect(() => {
     if (!params.id) return;
-    fetch(`/api/projects/${params.id}`).then(res => res.json()).then(setProject);
-    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+    fetch(`/api/projects/${params.id}`).then(res => res.json()).then(setTopic);
+    loadSections();
   }, [params.id]);
 
   const addSection = async (e: React.FormEvent) => {
@@ -26,16 +29,25 @@ const ProjectPage = () => {
       body: JSON.stringify({ projectId: params.id, key })
     });
     setKey('');
-    fetch(`/api/sections?projectId=${params.id}`).then(res => res.json()).then(setSections);
+    loadSections();
   };
 
-  if (!project) {
+  const removeSection = async (id: string) => {
+    await fetch('/api/sections', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    loadSections();
+  };
+
+  if (!topic) {
     return <main className='p-4'>Loading...</main>;
   }
 
   return (
     <main className='p-4'>
-      <h1 className='mb-4 text-2xl font-bold'>{project.title}</h1>
+      <h1 className='mb-4 text-2xl font-bold'>{topic.topic}</h1>
       <form onSubmit={addSection} className='mb-4 flex gap-2'>
         <input
           value={key}
@@ -47,8 +59,14 @@ const ProjectPage = () => {
       </form>
       <ul className='space-y-2'>
         {sections.map(s => (
-          <li key={s.id} className='rounded border p-2'>
-            <Link href={`/projects/${project.id}/sections/${s.id}`}>{s.key}</Link>
+          <li key={s.id} className='flex items-center justify-between rounded border p-2'>
+            <Link href={`/projects/${topic.id}/sections/${s.id}`}>{s.key}</Link>
+            <button
+              onClick={() => removeSection(s.id)}
+              className='text-sm text-red-600'
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
@@ -56,4 +74,4 @@ const ProjectPage = () => {
   );
 };
 
-export default ProjectPage;
+export default TopicPage;

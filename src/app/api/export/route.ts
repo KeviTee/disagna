@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   return new NextResponse(buffer, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'Content-Disposition': `attachment; filename="${project?.title || 'document'}.docx"`
+      'Content-Disposition': `attachment; filename="${project?.topic || 'document'}.docx"`
     }
   });
 }

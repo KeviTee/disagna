@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/lib/auth';
-import db from '@/lib/db';
-import { v4 as uuid } from 'uuid';
+import getDb from '@/lib/db';
+import { randomUUID } from 'crypto';
 import type { Project } from '@/lib/types';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user) return NextResponse.json([], { status: 401 });
-  db.read();
-  const projects = db.data.projects.filter(p => p.ownerId === user.id);
+  const db = await getDb();
+  const projects = await db
+    .collection<Project>('projects')
+    .find({ ownerId: user.id })
+    .toArray();
   return NextResponse.json(projects);
 }
 
@@ -19,9 +22,9 @@ export async function POST(req: Request) {
   const user = session?.user as any;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const data: Partial<Project> = await req.json();
-  db.read();
+  const db = await getDb();
   const newProject: Project = {
-    id: uuid(),
+    id: randomUUID(),
     ownerId: user.id,
     title: data.title ?? '',
     institution: data.institution ?? '',
@@ -30,7 +33,6 @@ export async function POST(req: Request) {
     deadlines: data.deadlines ?? [],
     status: data.status ?? 'draft'
   };
-  db.data.projects.push(newProject);
-  db.write();
+  await db.collection<Project>('projects').insertOne(newProject);
   return NextResponse.json(newProject, { status: 201 });
 }

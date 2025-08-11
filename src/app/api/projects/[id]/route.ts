@@ -1,30 +1,33 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/lib/auth';
-import db from '@/lib/db';
+import getDb from '@/lib/db';
 import type { Project } from '@/lib/types';
 
-interface Params { params: { id: string } }
-
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(_req: Request, context: any) {
+  const { params } = context;
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  db.read();
-  const project = db.data.projects.find(p => p.id === params.id && p.ownerId === user.id);
+  const db = await getDb();
+  const project = await db
+    .collection<Project>('projects')
+    .findOne({ id: params.id, ownerId: user.id });
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(project);
 }
 
-export async function PUT(req: Request, { params }: Params) {
+export async function PUT(req: Request, context: any) {
+  const { params } = context;
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  db.read();
-  const index = db.data.projects.findIndex(p => p.id === params.id && p.ownerId === user.id);
-  if (index === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const db = await getDb();
   const data: Partial<Project> = await req.json();
-  db.data.projects[index] = { ...db.data.projects[index], ...data };
-  db.write();
-  return NextResponse.json(db.data.projects[index]);
+  const filter = { id: params.id, ownerId: user.id };
+  const existing = await db.collection<Project>('projects').findOne(filter);
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  await db.collection<Project>('projects').updateOne(filter, { $set: data });
+  const updated = { ...existing, ...data } as Project;
+  return NextResponse.json(updated);
 }
